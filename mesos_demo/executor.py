@@ -2,6 +2,7 @@
 
 
 def run_shell():
+    logger.debug("run_shell >>> test")
     pass
 
 
