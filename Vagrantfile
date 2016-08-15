@@ -2,7 +2,7 @@
 
 Vagrant.configure(2) do |config|
 
-  (1..3).each do |i|
+  (1..5).each do |i|
     nodename = "node#{i}"
 
     config.vm.define nodename do |node|
