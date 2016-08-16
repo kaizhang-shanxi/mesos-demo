@@ -1,1 +1,4 @@
 .vagrant/
+build/
+dist/
+*.egg-info/
