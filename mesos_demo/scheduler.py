@@ -12,22 +12,25 @@ TASKS_NUM = 3
 TASK_CPUS = 0.1
 TASK_MEM = 32
 
+
 class Scheduler(mesos.interface.Scheduler):
     Resource = namedtuple("Resource", ["cpus", "mem"])
 
-    def __init__(self):
+    def __init__(self, executor):
         logger.debug("Scheduler >>> initiating...")
+        self.__executor = executor
         self.__tasksData = {}
         self.__tasksLaunched = 0
         self.__tasksFinished = 0
+        self.__messagesReceived = 0
 
     def registered(self, driver, frameworkId, masterInfo):
         logger.info("Registered with framework ID {}".
                     format(frameworkId.value))
-        logger.debug("registered >>> masterInfo >>> {}".format(masterInfo))
+        # logger.debug("registered >>> masterInfo >>> {}".format(masterInfo))
 
     def resourceOffers(self, driver, offers):
-        logger.info("resourceOffers >>> begin...")
+        logger.info("resourceOffers >>> start...")
         logger.debug("Received resource offers: {}".
                      format([o.id.value for o in offers]))
         for offer in offers:
@@ -37,20 +40,38 @@ class Scheduler(mesos.interface.Scheduler):
             if self.__tasksLaunched < TASKS_NUM:
                 task = self.__new_task(offer)
                 tasks.append(task)
+                self.__tasksData[task.task_id.value] = (offer.slave_id,
+                                                        task.executor.executor_id)
+                self.__tasksLaunched += 1
+                logger.debug("tasks launched >>> {}".format(self.__tasksLaunched))
 
-            operation = mesos_pb2.Offer.Operation()
-            operation.type = mesos_pb2.Offer.Operation.LAUNCH
-            operation.launch.task_infos.extend(tasks)
-            driver.acceptOffers([offer.id], [operation])
+            if tasks:
+                logger.info("Accepting offer {} on {}".format(offer.id,
+                                                              offer.hostname))
+                driver.launchTasks(offer.id, tasks)
+            else:
+                logger.info("Declining offer {} on {}".format(offer.id,
+                                                              offer.hostname))
+                driver.declineOffer(offer.id)
 
     def statusUpdate(self, driver, update):
         logger.info("Task {} is in state {}".
                     format(update.task_id.value,
                            mesos_pb2.TaskState.Name(update.state)))
-        logger.debug("update >>> {}".format(update))
+        if update.state == mesos_pb2.TASK_FINISHED:
+            self.__tasksFinished += 1
+            logger.debug("tasks finished >>> {}".format(self.__tasksFinished))
+            slave_id, executor_id = self.__tasksData[update.task_id.value]
+            # logger.debug("slave_id >>> {}".format(slave_id))
+            # logger.debug("executor_id >>> {}".format(executor_id))
+            driver.sendFrameworkMessage(executor_id, slave_id, "Scheduler >>> statusUpdate >>> end.")
 
     def frameworkMessage(self, driver, executorId, slaveId, message):
         logger.info("Received message: {}".format(message))
+        self.__messagesReceived += 1
+        if self.__messagesReceived == TASKS_NUM:
+            logger.info("Tasks finished.")
+            driver.stop()
 
     def __calculate_resource(self, offer):
         offerCpus = 0
@@ -59,7 +80,7 @@ class Scheduler(mesos.interface.Scheduler):
         for resource in offer.resources:
             if resource.name == "cpus":
                 offerCpus += resource.scalar.value
-            elif resource.name == "mes":
+            elif resource.name == "mem":
                 offerMem += resource.scalar.value
 
         return self.Resource(offerCpus, offerMem)
@@ -70,6 +91,7 @@ class Scheduler(mesos.interface.Scheduler):
         task.task_id.value = str(task_id)
         task.slave_id.value = offer.slave_id.value
         task.name = "task {}".format(task_id)
+        task.executor.MergeFrom(self.__executor)
 
         cpus = task.resources.add()
         cpus.name = "cpus"
@@ -80,7 +102,5 @@ class Scheduler(mesos.interface.Scheduler):
         mem.name = "mem"
         mem.type = mesos_pb2.Value.SCALAR
         mem.scalar.value = TASK_MEM
-
-        task.command.value = "echo hello world"
 
         return task

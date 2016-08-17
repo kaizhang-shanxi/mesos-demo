@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import signal
 import argh
 
-from executor import run_shell, run_docker, run_hadoop
-from utils import gracefully_exit, logger
+from subcommands import run_shell, run_docker, run_hadoop
+from utils import logger
 
 
 ONE_LEVEL_COMMANDS = [
@@ -16,8 +15,6 @@ ONE_LEVEL_COMMANDS = [
 
 
 def main():
-    signal.signal(signal.SIGINT, gracefully_exit)
-
     logger.debug("Demo >>> start...")
     parser = argh.ArghParser()
     parser.add_commands(ONE_LEVEL_COMMANDS)

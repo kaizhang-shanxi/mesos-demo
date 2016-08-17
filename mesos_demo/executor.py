@@ -1,35 +1,59 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import argh
-import mesos.native
-from mesos.interface import mesos_pb2
 
-from scheduler import Scheduler
+import mesos.interface
+from mesos.interface import mesos_pb2
+import mesos.native
+
+import threading
+import sys
+
 from utils import logger
 
 
-@argh.arg("-m", "--mesos-master",
-          default="zk://192.168.78.21:2181,192.168.78.22:2181,192.168.78.25:2181/mesos",
-          help="the address of mesos masters")
-@argh.arg("--cpus", default=0.1, type=float, help="the cpus task needed")
-@argh.arg("--mem", default=32, type=float, help="the memory task needed")
-def run_shell(**kwargs):
-    logger.debug("run_shell >>> begin...")
-    logger.debug("mesos_master >>> {}".format(kwargs["mesos_master"]))
+class Executor(mesos.interface.Executor):
+    def __init__(self):
+        pass
 
-    framework = mesos_pb2.FrameworkInfo()
-    framework.user = ""     # Mesos 填写
-    framework.name = "Mesos Demo Run Shell"
+    def launchTask(self, driver, task):
+        def run_task():
+            logger.info("Running task >>> {}".format(task.task_id.value))
+            update = mesos_pb2.TaskStatus()
+            update.task_id.value = task.task_id.value
+            update.state = mesos_pb2.TASK_RUNNING
+            update.data = "kai >>> demo >>> running"
+            driver.sendStatusUpdate(update)
 
-    driver = mesos.native.MesosSchedulerDriver(Scheduler(), framework,
-                                               kwargs["mesos_master"])
-    driver.run()
+            logger.debug("Hello, world.")
+            print("Hello, world.")
+
+            logger.info("Sending status update...")
+            update = mesos_pb2.TaskStatus()
+            update.task_id.value = task.task_id.value
+            update.state = mesos_pb2.TASK_FINISHED
+            update.data = "kai >>> demo >>> finished"
+            driver.sendStatusUpdate(update)
+            logger.info("Sent status update")
+
+        thread = threading.Thread(target=run_task)
+        thread.start()
+
+    def frameworkMessage(self, driver, message):
+        logger.info("Executor >>> frameworkMessage >>> start...")
+        driver.sendFrameworkMessage(message)
+
+    def registered(self, driver, executorInfo, frameworkInfo, slaveInfo):
+        logger.info("RenderExecutor registered")
+
+    def reregistered(self, driver, slaveInfo):
+        logger.info("RenderExecutor reregistered")
+
+    def disconnected(self, driver):
+        logger.info("RenderExecutor disconnected")
 
 
-def run_hadoop():
-    pass
-
-
-def run_docker():
-    pass
+if __name__ == "__main__":
+    logger.info("executor >>> start...")
+    driver = mesos.native.MesosExecutorDriver(Executor())
+    sys.exit(0 if driver.run() == mesos_pb2.DRIVER_STOPPED else 1)
