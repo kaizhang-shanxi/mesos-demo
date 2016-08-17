@@ -25,8 +25,7 @@ class Executor(mesos.interface.Executor):
             update.data = "kai >>> demo >>> running"
             driver.sendStatusUpdate(update)
 
-            logger.debug("Hello, world.")
-            print("Hello, world.")
+            print("Hello, task {}.".format(task.task_id.value))
 
             logger.info("Sending status update...")
             update = mesos_pb2.TaskStatus()
@@ -41,6 +40,8 @@ class Executor(mesos.interface.Executor):
 
     def frameworkMessage(self, driver, message):
         logger.info("Executor >>> frameworkMessage >>> start...")
+        logger.debug("Executor >>> frameworkMessage >>> message >>> {}".
+                     format(message))
         driver.sendFrameworkMessage(message)
 
     def registered(self, driver, executorInfo, frameworkInfo, slaveInfo):

@@ -14,7 +14,7 @@ Vagrant.configure(2) do |config|
       end
 
       node.vm.network "private_network", ip: "192.168.78.2#{i}"
-      node.vm.synced_folder "./", "/app"
+      node.vm.synced_folder "./", "/app/mesos-demo"
     end
 
   end
