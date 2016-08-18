@@ -1,6 +1,10 @@
 # vim: ft=ruby:
 
-Vagrant.configure(2) do |config|
+VAGRANTFILE_API_VERSION = "2"
+HADOOP_VERSION = "2.7.0"
+# PRIVATE_IP = "192.168.78.2?"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   (1..5).each do |i|
     nodename = "node#{i}"

@@ -20,6 +20,7 @@ from utils import logger
           help="the address of mesos masters")
 @argh.arg("--cpus", default=0.1, type=float, help="the cpus task needed")
 @argh.arg("--mem", default=32, type=float, help="the memory task needed")
+@argh.arg("--ip", help="host ip")
 def run_shell(**kwargs):
     logger.debug("run_shell >>> start...")
     logger.debug("mesos_master >>> {}".format(kwargs["mesos_master"]))
@@ -28,10 +29,11 @@ def run_shell(**kwargs):
     framework.user = ""     # Mesos 填写
     framework.name = "Mesos Demo Run Shell"
 
-    os.environ["LIBPROCESS_IP"] = "192.168.78.22"
+    # os.environ["LIBPROCESS_IP"] = "192.168.78.21"
+    os.environ["LIBPROCESS_IP"] = kwargs["ip"]
     # logger.debug("LIBPROCESS_IP >>> {}".format(os.environ["LIBPROCESS_IP"]))
 
-    baseUri = "/app/mesos_demo/"
+    baseUri = "/app/mesos-demo/mesos_demo/"
     uris = ["executor.py", "utils.py"]
     uris = [os.path.join(baseUri, uri) for uri in uris]
 

@@ -12,6 +12,7 @@ import random
 from utils import logger
 
 TASKS_NUM = 1
+# TASKS_NUM = 1
 TASK_CPUS = 0.3
 TASK_MEM = 32
 
