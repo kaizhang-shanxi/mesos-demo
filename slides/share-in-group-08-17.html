@@ -73,30 +73,30 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <section><section id="mesos-概述" class="titleslide slide level1"><h1>Mesos 概述</h1></section><section id="mesos-是什么" class="slide level2">
 <h1>Mesos 是什么</h1>
 <ul>
-<li><p>官方说：它是一个分布式系统内核</p></li>
-<li>我说：
+<li class="fragment"><p>官方说：它是一个分布式系统内核</p></li>
+<li class="fragment">我说：
 <ul>
-<li>它能告诉外界有多少资源</li>
-<li>它能提供使用这些资源的接口</li>
+<li class="fragment">它能告诉外界有多少资源</li>
+<li class="fragment">它能提供使用这些资源的接口</li>
 </ul></li>
 </ul>
 </section><section id="为什么要用-mesos" class="slide level2">
 <h1>为什么要用 Mesos</h1>
 <ul>
-<li>性能方面
+<li class="fragment">性能方面
 <ul>
-<li>线性扩容 --&gt; 10, 000 个节点</li>
-<li>高可用性 --&gt; 配合 Zookeeper 构成主备集群</li>
+<li class="fragment">线性扩容 --&gt; 10, 000 个节点</li>
+<li class="fragment">高可用性 --&gt; 配合 Zookeeper 构成主备集群</li>
 </ul></li>
-<li>与 LAIN 的结合方面
+<li class="fragment">与 LAIN 的结合方面
 <ul>
-<li>原生支持 docker</li>
-<li>支持容器之外的应用 --&gt; Hadoop</li>
+<li class="fragment">原生支持 docker</li>
+<li class="fragment">支持容器之外的应用 --&gt; Hadoop</li>
 </ul></li>
-<li>特色
+<li class="fragment">特色
 <ul>
-<li>资源隔离 --&gt; cpu，内存，硬盘，端口……</li>
-<li>跨平台</li>
+<li class="fragment">资源隔离 --&gt; cpu，内存，硬盘，端口……</li>
+<li class="fragment">跨平台</li>
 </ul></li>
 </ul>
 </section></section>
@@ -144,8 +144,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
                 driver.launchTasks(offer.<span class="bu">id</span>, tasks)
             <span class="cf">else</span>:
                 driver.declineOffer(offer.<span class="bu">id</span>)</code></pre></div>
-</section><section id="新建任务" class="slide level2">
-<h1>新建任务</h1>
+</section><section id="新建任务----非-docker" class="slide level2">
+<h1>新建任务 -- 非 docker</h1>
 <div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">    <span class="kw">def</span> __new_task(<span class="va">self</span>, offer):
         task_id <span class="op">=</span> <span class="bu">str</span>(uuid.uuid4())
         task <span class="op">=</span> mesos_pb2.TaskInfo()
@@ -165,9 +165,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <h1>Executor</h1>
 <div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">    executor <span class="op">=</span> mesos_pb2.ExecutorInfo()
     executor.command.value <span class="op">=</span> <span class="st">&quot;python executor.py&quot;</span></code></pre></div>
-<ul>
-<li>executor.py</li>
-</ul>
+<p><code>executor.py</code></p>
 <div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="kw">class</span> Executor(mesos.interface.Executor):
     <span class="kw">def</span> launchTask(<span class="va">self</span>, driver, task):
         <span class="kw">def</span> run_task():
@@ -178,16 +176,42 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:
     driver <span class="op">=</span> mesos.native.MesosExecutorDriver(Executor())
     sys.exit(<span class="dv">0</span> <span class="cf">if</span> driver.run() <span class="op">==</span> mesos_pb2.DRIVER_STOPPED <span class="cf">else</span> <span class="dv">1</span>)</code></pre></div>
+</section><section id="新建任务----docker" class="slide level2">
+<h1>新建任务 -- docker</h1>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python">    <span class="kw">def</span> __new_docker_task(<span class="va">self</span>, offer):
+        task <span class="op">=</span> mesos_pb2.TaskInfo()
+        task.slave_id.value <span class="op">=</span> offer.slave_id.value
+
+        container <span class="op">=</span> mesos_pb2.ContainerInfo()
+        container.<span class="bu">type</span> <span class="op">=</span> <span class="dv">1</span>  <span class="co"># mesos_pb2.ContainerInfo.Type.DOCKER</span>
+
+        docker <span class="op">=</span> mesos_pb2.ContainerInfo.DockerInfo()
+        docker.image <span class="op">=</span> <span class="st">&quot;python:3&quot;</span>
+        docker.network <span class="op">=</span> <span class="dv">2</span>  <span class="co"># mesos_pb2.ContainerInfo.DockerInfo.Network.BRIDGE</span>
+        docker.force_pull_image <span class="op">=</span> <span class="va">True</span>
+
+        docker_port <span class="op">=</span> docker.port_mappings.add()
+        docker_port.host_port <span class="op">=</span> host_port
+        docker_port.container_port <span class="op">=</span> <span class="dv">8080</span>
+
+        container.docker.MergeFrom(docker)
+        task.container.MergeFrom(container)
+
+        command <span class="op">=</span> mesos_pb2.CommandInfo()
+        command.value <span class="op">=</span> <span class="st">&quot;python3 -m http.server 8080&quot;</span>
+        task.command.MergeFrom(command)
+
+        <span class="cf">return</span> task</code></pre></div>
 </section><section id="一个演示" class="slide level2">
 <h1>一个演示</h1>
 </section></section>
 <section><section id="mesos-与-lain" class="titleslide slide level1"><h1>Mesos 与 LAIN</h1></section><section id="与-lain-的结合" class="slide level2">
 <h1>与 LAIN 的结合</h1>
 <ul>
-<li><p>Mesos &lt;---&gt; Swarm</p></li>
-<li><p>Mesos &lt;--&gt; LAIN framework for mesos &lt;--&gt; deployd &lt;--&gt; console</p></li>
-<li><p>官方支持 C++、Java 和 Python 的接口</p></li>
-<li><p>有 Golang 的非官方库，不确定是否最新</p></li>
+<li class="fragment"><p>Mesos &lt;---&gt; Swarm</p></li>
+<li class="fragment"><p>Mesos &lt;--&gt; LAIN framework for mesos &lt;--&gt; deployd &lt;--&gt; console</p></li>
+<li class="fragment"><p>官方支持 C++、Java 和 Python 的接口</p></li>
+<li class="fragment"><p>有 Golang 的非官方库，不确定是否最新</p></li>
 </ul>
 </section><section id="hadoop-on-mesos" class="slide level2">
 <h1>Hadoop on mesos</h1>

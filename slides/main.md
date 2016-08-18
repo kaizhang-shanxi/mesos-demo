@@ -76,7 +76,8 @@ class MyScheduler(mesos.interface.Scheduler):
                 driver.declineOffer(offer.id)
 ```
 
-## 新建任务
+## 新建任务 -- 非 docker
+
 ```python
     def __new_task(self, offer):
         task_id = str(uuid.uuid4())
@@ -102,7 +103,7 @@ class MyScheduler(mesos.interface.Scheduler):
     executor.command.value = "python executor.py"
 ```
 
-- executor.py
+`executor.py`
 
 ```python
 class Executor(mesos.interface.Executor):
@@ -115,6 +116,35 @@ class Executor(mesos.interface.Executor):
 if __name__ == "__main__":
     driver = mesos.native.MesosExecutorDriver(Executor())
     sys.exit(0 if driver.run() == mesos_pb2.DRIVER_STOPPED else 1)
+```
+
+## 新建任务 -- docker
+
+```python
+    def __new_docker_task(self, offer):
+        task = mesos_pb2.TaskInfo()
+        task.slave_id.value = offer.slave_id.value
+
+        container = mesos_pb2.ContainerInfo()
+        container.type = 1  # mesos_pb2.ContainerInfo.Type.DOCKER
+
+        docker = mesos_pb2.ContainerInfo.DockerInfo()
+        docker.image = "python:3"
+        docker.network = 2  # mesos_pb2.ContainerInfo.DockerInfo.Network.BRIDGE
+        docker.force_pull_image = True
+
+        docker_port = docker.port_mappings.add()
+        docker_port.host_port = host_port
+        docker_port.container_port = 8080
+
+        container.docker.MergeFrom(docker)
+        task.container.MergeFrom(container)
+
+        command = mesos_pb2.CommandInfo()
+        command.value = "python3 -m http.server 8080"
+        task.command.MergeFrom(command)
+
+        return task
 ```
 
 ## 一个演示
