@@ -15,6 +15,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
       node.vm.provider "virtualbox" do |v|
         v.memory = i == 1 ? 1536 : 512
+        # v.memory = i == 3 ? 2048 : 512
       end
 
       node.vm.network "private_network", ip: "192.168.78.2#{i}"
