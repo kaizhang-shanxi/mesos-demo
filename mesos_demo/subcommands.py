@@ -34,8 +34,8 @@ def run_shell(**kwargs):
     # logger.debug("LIBPROCESS_IP >>> {}".format(os.environ["LIBPROCESS_IP"]))
 
     # baseUri = "/app/mesos-demo/mesos_demo/"
-    # baseUri = os.path.dirname(os.path.realpath(__file__))
-    baseUri = "https://github.com/kaizhang-shanxi/mesos-demo/tree/master/mesos_demo"
+    baseUri = os.path.dirname(os.path.realpath(__file__))
+    # baseUri = "https://github.com/kaizhang-shanxi/mesos-demo/tree/master/mesos_demo"
     # logger.debug("baseUri >>> {}".format(baseUri))
     # logger.debug("file >>> {}".format(__file__))
     # logger.debug("realpath >>> {}".format(os.path.realpath(__file__)))
