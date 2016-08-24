@@ -49,11 +49,9 @@ EOF
 
 ```
 # 节点 1
-[vagrant@node1 ~]$ sudo cp -i /etc/mesos/zk /etc/mesos/zk.origin
 [vagrant@node1 ~]$ echo "zk://192.168.78.21:2181,192.168.78.22:2181/mesos"|sudo tee /etc/mesos/zk
 
 # 节点 2
-[vagrant@node2 ~]$ sudo cp -i /etc/mesos/zk /etc/mesos/zk.origin
 [vagrant@node2 ~]$ echo "zk://192.168.78.21:2181,192.168.78.22:2181/mesos"|sudo tee /etc/mesos/zk
 ```
 
@@ -108,7 +106,6 @@ $ sudo yum install mesos
 
 ```
 # 节点 3
-[vagrant@node3 ~]$ sudo cp -i /etc/mesos/zk /etc/mesos/zk.origin
 [vagrant@node3 ~]$ echo "zk://192.168.78.21:2181,192.168.78.22:2181/mesos"|sudo tee /etc/mesos/zk
 ```
 
