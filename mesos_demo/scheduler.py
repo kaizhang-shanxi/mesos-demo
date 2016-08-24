@@ -42,8 +42,8 @@ class Scheduler(mesos.interface.Scheduler):
             # resource = self.__calculate_resource(offer)
             # logger.info("Received offer: {}".format(resource))
             if self.__tasksLaunched < TASKS_NUM:
-                # task = self.__new_task(offer)
-                task = self.__new_docker_task(offer)
+                task = self.__new_task(offer)
+                # task = self.__new_docker_task(offer)
                 tasks.append(task)
                 self.__tasksData[task.task_id.value] = \
                     (offer.slave_id, task.executor.executor_id)

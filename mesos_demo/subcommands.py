@@ -33,7 +33,12 @@ def run_shell(**kwargs):
     os.environ["LIBPROCESS_IP"] = kwargs["ip"]
     # logger.debug("LIBPROCESS_IP >>> {}".format(os.environ["LIBPROCESS_IP"]))
 
-    baseUri = "/app/mesos-demo/mesos_demo/"
+    # baseUri = "/app/mesos-demo/mesos_demo/"
+    baseUri = os.path.dirname(os.path.realpath(__file__))
+    # logger.debug("baseUri >>> {}".format(baseUri))
+    # logger.debug("file >>> {}".format(__file__))
+    # logger.debug("realpath >>> {}".format(os.path.realpath(__file__)))
+    # logger.debug("dirname >>> {}".format(os.path.dirname(os.path.realpath(__file__))))
     uris = ["executor.py", "utils.py"]
     uris = [os.path.join(baseUri, uri) for uri in uris]
 
